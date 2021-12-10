@@ -1,0 +1,38 @@
+#%RAML 1.0
+title: Walmart Process API
+
+traits:
+  client-id-required:
+    queryParameters:
+      client_id:
+        type: string
+      client_secret:
+        type: string
+
+/products:
+  /get-details:
+    get:
+      is: [client-id-required]
+      queryParameters:
+        uid:
+          type: number
+      responses:
+        200:
+          body:
+            application/json:
+              example: !include /examples/product.raml
+                
+/stores:
+  /list:
+    get:
+      queryParameters:
+        postalCode:
+          type: string
+          minLength: 5
+          maxLength: 5
+      responses:
+        200:
+          body:
+            application/json:
+              example: !include /examples/store.raml
+                

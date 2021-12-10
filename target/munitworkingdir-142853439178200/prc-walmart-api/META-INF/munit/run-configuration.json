@@ -1,0 +1,75 @@
+{
+  "runToken": "da035d42-dc67-4609-b05d-18c3fc4a3070",
+  "projectName": "prc-walmart-api",
+  "domainLocation": "",
+  "tags": [],
+  "testNames": [],
+  "suitePaths": [
+    "walmart-process-api-apikit-test.xml"
+  ],
+  "allSuitePaths": [
+    "walmart-process-api-apikit-test.xml"
+  ],
+  "skipAfterFailure": false,
+  "notifierConfigurations": [
+    {
+      "clazz": "org.mule.munit.remote.notifiers.ConsoleNotifier",
+      "parameters": [
+        {
+          "name": "runToken",
+          "type": "java.lang.String",
+          "value": "da035d42-dc67-4609-b05d-18c3fc4a3070"
+        }
+      ]
+    }
+  ],
+  "coverageConfiguration": {
+    "runCoverage": true,
+    "randomizeCoveragePort": true,
+    "suitePaths": [
+      "walmart-process-api-apikit-test.xml"
+    ],
+    "ignoredFiles": [],
+    "ignoredFlowNames": []
+  },
+  "containerConfiguration": {
+    "type": "EMBEDDED",
+    "value": {
+      "mavenConfiguration": {
+        "settingsXmlFilePath": "C:\\Users\\shreyasshekhar\\.m2\\settings.xml",
+        "globalSettingsXmlFilePath": "C:\\apache-maven-3.8.4\\conf\\settings.xml",
+        "mavenRepositoryDirectoryPath": "C:\\apache-maven-3.8.4\\m2",
+        "activeProfiles": [
+          "Mule"
+        ],
+        "offlineMode": false,
+        "forcePolicyUpdate": true,
+        "ignoreArtifactDescriptorRepositories": false,
+        "remoteRepositories": [
+          {
+            "id": "mulesoft-releases",
+            "url": "https://repository.mulesoft.org/releases/"
+          },
+          {
+            "id": "central",
+            "url": "https://repo.maven.apache.org/maven2"
+          }
+        ]
+      },
+      "serverPluginConfigurations": [
+        {
+          "groupId": "com.mulesoft.munit.plugins",
+          "artifactId": "munit-coverage-plugin",
+          "version": "2.3.6",
+          "type": "jar",
+          "classifier": "mule-server-plugin"
+        }
+      ],
+      "runtimeId": "4.4.0",
+      "product": "MULE_EE",
+      "munitWorkingDirectoryPath": "C:\\GitRepo\\Walmart-Casestudy\\target\\munitworkingdir-142853439178200",
+      "log4JConfigurationFilePath": "C:\\GitRepo\\Walmart-Casestudy\\target\\test-classes\\log4j2-test.xml",
+      "type": "EMBEDDED"
+    }
+  }
+}

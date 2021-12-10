@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway" xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd">
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="801cce3a-39b8-4cd5-9e1d-585010c7ad6c" >
+		<http:request-connection host="walmart.p.rapidapi.com" protocol="HTTPS"/>
+	</http:request-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="2301e29c-6f16-4d54-9397-177e053f4996" >
+		<db:my-sql-connection host="${db.host}" port="${db.port}" user="${db.user}" password="${db.password}" database="${db.database}" />
+	</db:config>
+	<configuration-properties doc:name="Configuration properties" doc:id="c6e519fd-d315-4e8e-9c21-d6880c977586" file="config.yaml" />
+	<api-gateway:autodiscovery apiId="17495500" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="638dae50-6f82-4068-9283-365d8c397cde" flowRef="walmart-process-api-main" />
+	<flow name="getProducts" doc:id="10e17068-93ef-4e32-a6a7-54034febe32a" >
+		<set-variable value="#[attributes.queryParams.uid as Number]" doc:name="Set Variable - usItemId" doc:id="a42eff5b-729a-4819-b486-c690f073d0c6" variableName="usItemId"/>
+		<http:request method="GET" doc:name="Request" doc:id="befd2784-7c0f-4b47-a18a-0d3c55a3d94e" path="/products/v3/get-details/" config-ref="HTTP_Request_configuration">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	'x-rapidapi-host' : 'walmart.p.rapidapi.com',
+	'x-rapidapi-key' : '02daa88726msh72140fc98cd8f2ap1a9eeejsncc549471cd70'
+}]]]></http:headers>
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"usItemId" : vars.usItemId
+}]]]></http:query-params>
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="7be12138-42a7-437b-bfd8-1bf67d886a1d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="cbaa2add-269e-4827-a28c-9a9fcc4ed11c" type="HTTP:BAD_REQUEST, HTTP:CONNECTIVITY, HTTP:INTERNAL_SERVER_ERROR, HTTP:METHOD_NOT_ALLOWED">
+				<ee:transform doc:name="Transform Message" doc:id="96ab29f6-aedd-4b56-8a81-1112c17f4143" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+error.description]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<set-variable value="400" doc:name="Set Variable" doc:id="b5776e48-3aa0-47be-9f11-e034024266c4" variableName="httpStatus"/>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="getStores" doc:id="e16ed6c8-7654-42a6-ae07-c01562ce389f" >
+		<set-variable value="#[attributes.queryParams.postalCode as Number]" doc:name="Postal Code" doc:id="57e27a6b-f5c2-48ea-899b-61eff20c0186" variableName="postalCode"/>
+		<http:request method="GET" doc:name="Request" doc:id="c7169d7f-011f-40ea-b48f-c08d07d75894" path="/stores/list" config-ref="HTTP_Request_configuration">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	'x-rapidapi-host' : 'walmart.p.rapidapi.com',
+	'x-rapidapi-key' : '02daa88726msh72140fc98cd8f2ap1a9eeejsncc549471cd70'
+}]]]></http:headers>
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"postalCode" : vars.postalCode
+}]]]></http:query-params>
+		</http:request>
+		<ee:transform doc:name="order by distance" doc:id="758f8e54-fca4-4f7f-951c-1c6d80fcb050" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload.data.storesBySearchTerm.stores orderBy($.distance)]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference" doc:id="61ce5ead-f967-47da-98a0-d4bb6b0739f3" name="dbinsert"/>
+		<ee:transform doc:name="minimum distance" doc:id="e5ac57db-4ff5-47af-ae53-5d7f9bca60bf" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload[0].address.address ++ "," ++ payload[0].address.city 
+++ payload[0].address.state ++ "," 
+++ payload[0].address.country ++ "(" ++ payload[0].address.postalCode
+++ ")"]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<set-variable value="#[payload]" doc:name="store details" doc:id="4d84dfb2-66bc-4329-a5be-a326df3366b6" variableName="storeDetails"/>
+		<http:request method="GET" doc:name="Request" doc:id="3b2a9aa9-92e8-4e03-b9cb-89b00cbed181" config-ref="HTTP_Request_configuration" path="/stores/list-preferred">
+			<http:headers><![CDATA[#[output application/java
+---
+{
+	'x-rapidapi-host' : 'walmart.p.rapidapi.com',
+	'x-rapidapi-key' : '02daa88726msh72140fc98cd8f2ap1a9eeejsncc549471cd70'
+}]]]></http:headers>
+			<http:query-params><![CDATA[#[output application/java
+---
+{
+	"preferredStoreId" : vars.storeID,
+	"postalCode" : vars.postalCode
+}]]]></http:query-params>
+		</http:request>
+		<set-variable value="#[payload.preferredStore.phone]" doc:name="store contact number" doc:id="a692c3f9-7545-4a84-bb4c-ecbcdee7a842" variableName="contact"/>
+		<logger level="INFO" doc:name="Logger" doc:id="bd060591-a870-4a56-a732-93fc493a7c2e" message="#[vars.contact]" />
+		<db:insert doc:name="Insert" doc:id="e21d8750-3c29-42c7-a747-59acc9d3a9b5" config-ref="Database_Config">
+			<db:sql ><![CDATA[INSERT INTO `walmartstore42`(`order_id`, `store_id`, `store_name`, `store_address`, `store_distance`, `store_contact_number`, `product_type_id`, `quantity`) VALUES (:order_id, :store_id, :store_name, :store_address, :store_distance, :store_contact_number, :product_type_id, :quantity)
+]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	order_id : 21,
+	store_id : vars.storeID,
+	store_name : vars.storeName,
+	store_address : vars.storeAddress,
+	store_distance : vars.storeDistance,
+	store_contact_number : vars.contact,
+	product_type_id : 200 as Number,
+	quantity : 21 as Number
+}]]]></db:input-parameters>
+		</db:insert>
+		<ee:transform doc:name="Transform Message" doc:id="9dd88687-3cf8-4ad5-a3c6-645cf3f6e7a0">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+vars.storeDetails]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="ba1821af-46ab-4115-82bf-0c62b8712722" type="DB:BAD_SQL_SYNTAX, DB:CONNECTIVITY, DB:QUERY_EXECUTION">
+				<ee:transform doc:name="Transform Message" doc:id="ba5f01ae-993d-46fc-8b12-30389ba22e5f" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+error.description]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<set-variable value="400" doc:name="Set Variable" doc:id="77a233fc-a815-48b9-b89a-231d01931da6" variableName="httpStatus"/>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="dbinsert" doc:id="b6bd7af0-b948-4928-b96a-94a47e9e1c5f" >
+		<set-variable value="#[payload[0].id as Number]" doc:name="storeID" doc:id="14c15ac4-9e9a-46da-bf27-8f4a2c2efc85" variableName="storeID" />
+		<logger level="INFO" doc:name="Logger" doc:id="067874c8-efed-4f57-832c-23920bb87677" message="#[vars.storeID]"/>
+		<set-variable value="#[payload[0].displayName]" doc:name="store name" doc:id="251e5a12-4497-43ac-890b-559de5eb9c20" variableName="storeName"/>
+		<logger level="INFO" doc:name="Logger" doc:id="77b0e5f7-f7fc-4d01-8097-e83e9a8cc610" message="#[vars.storeName]"/>
+		<set-variable value="#[payload[0].address.address]" doc:name="store address" doc:id="f1817c5f-f9a1-474d-85a4-651bc23e4188" variableName="storeAddress"/>
+		<logger level="INFO" doc:name="Logger" doc:id="24fa8536-2489-489a-92a3-f504ea5519fa" message="#[vars.storeAddress]"/>
+		<set-variable value="#[payload[0].distance as Number]" doc:name="store distance" doc:id="dc311a91-f63f-4b09-9479-67a272898850" variableName="storeDistance"/>
+		<logger level="INFO" doc:name="Logger" doc:id="fba54c13-3dab-49a5-a629-53b17e5d2831" message="#[vars.storeDistance]"/>
+	</flow>
+</mule>
